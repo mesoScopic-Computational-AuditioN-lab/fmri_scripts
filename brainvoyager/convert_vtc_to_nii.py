@@ -33,42 +33,45 @@ args = parser.parse_args()
 
 if args.output_dir is None:
     if args.filename is None:
-        output_dir = args.input_dir.replace('.vmr', '.nii.gz')
+        output_dir = args.input_dir.replace('.vtc', '.nii.gz')
     else:
-        output_dir = args.filename.replace('.vmr', '.nii.gz')
+        output_dir = args.filename.replace('.vtc', '.nii.gz')
 else:
     output_dir = args.output_dir
 
 if args.filename:
     print(f'converting {args.filename}')
-    header, data = bv.vmr.read_vmr(args.filename)
+    header, data = bv.vtc.read_vtc(args.filename)
     data = data.astype(float)
 
     print('pickeling header...', end=' ')
     try:
-        with open(args.filename.replace('.vmr', '.pkl'), 'wb') as f:
+        with open(
+            output_dir + args.filename.replace('.vtc', '.pkl'),
+            'wb'
+        ) as f:
             pkl.dump(header, f)
     except Exception as e:
-        print('Error')
+        print(f'Error: {e}')
     img = nb.Nifti1Image(data, affine=np.eye(4))
-    nb.save(img, args.filename.replace('.vmr', '.nii.gz'))
+    nb.save(img, output_dir)
     print('done!')
     exit(0)
 
 elif args.input_dir:
-
-    for file in glob(args.input_dir + '*.vmr'):
-        print('found: %s' % file)
-        header, data = bv.vmr.read_vmr(file)
-        data = data.astype(float)
+    print(glob(args.input_dir + '*.vtc'))
+    for file in glob(args.input_dir + '*.vtc'):
+        header, data = bv.vtc.read_vtc(file)
+        # data = np.transpose(data, [0, 2, 1, 3])
+        # data = data[::-1, ::-1, ::-1, :]
         print('pickeling header...', end=' ')
-        with open(output_dir + file.replace('.vmr', '.pkl'), 'wb') as f:
+        with open(output_dir + file.replace('.vtc', '.pkl'), 'wb') as f:
             pkl.dump(header, f)
         img = nb.Nifti1Image(data, affine=np.eye(4))
-        img.header["pixdim"][1] = 1 #header["VoxelSizeX"]
-        img.header["pixdim"][2] = 1 #header["VoxelSizeY"]
-        img.header["pixdim"][3] = 1 #header["VoxelSizeZ"]
-        nb.save(img, output_dir + file.replace('.vmr', '.nii.gz'))
+        # img.header["pixdim"][1] = 1 # header["VoxelSizeX"]
+        # img.header["pixdim"][2] = 1 # header["VoxelSizeY"]
+        # img.header["pixdim"][3] = 1 # header["VoxelSizeZ"]
+        nb.save(img, output_dir + file.replace('.vtc', '.nii.gz'))
         print('done!')
 
     exit(0)
